@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class YoincBotListener extends ListenerAdapter {
 
-
     public static VoiceChannel global_voiceChannel;
     public static List<Member> global_voiceChannelMembers;
     public static Member chameleon;
@@ -43,7 +42,7 @@ public class YoincBotListener extends ListenerAdapter {
             Guild guild = event.getGuild();
             Member member = event.getMember();
             if (isThreadActive(event, member, guild)) {
-                if (event.getMessage().getContentRaw().contains("vote")) {
+                if (event.getMessage().getContentRaw().toLowerCase().contains("vote")) {
                     event.getMessage().reply("Let's vote! Who is the chameleon? Pick the first letter of their username.").queue(message -> {
                         global_voteMessageID = message.getId();
                         for (Member global_voiceChannelMember : global_voiceChannelMembers) {
@@ -52,12 +51,8 @@ public class YoincBotListener extends ListenerAdapter {
                                 char firstLetter = global_voiceChannelMember.getEffectiveName().charAt(0);
                                 String regionalIndicator = new String(Character.toChars(0x1F1E6 + (firstLetter - 'a')));
                                 message.addReaction(Emoji.fromUnicode(regionalIndicator)).queue();
-
-                                char firstLetter2 = global_voiceChannelMember.getEffectiveName().charAt(1);
-                                String regionalIndicator2 = new String(Character.toChars(0x1F1E6 + (firstLetter2 - 'a')));
-                                message.addReaction(Emoji.fromUnicode(regionalIndicator2)).queue();
                             } else {
-                                //TODO add exclusive member emojis
+                                message.addReaction(guild.getEmojisByName(emoteID, true).getFirst()).queue();
                             }
                         }
                     });
@@ -129,7 +124,6 @@ public class YoincBotListener extends ListenerAdapter {
                                             event.getChannel().sendMessage("All voting is done").queue();
 
                                             //TODO figure out how to determine the voting results
-
                                             chameleon = null;
                                             global_voiceChannel = null;
                                             global_voiceChannelMembers = new ArrayList<>();
@@ -156,7 +150,7 @@ public class YoincBotListener extends ListenerAdapter {
         Guild guild = event.getGuild();
 
         if (eventChannel.getType().equals(ChannelType.PRIVATE)) {
-            //no slash commands allowed in private channels
+        //no slash commands allowed in private channels
         } else if (eventChannel.getType().equals(ChannelType.TEXT)) {
             if ("chameleon".equals(event.getName())) {
 
@@ -165,8 +159,7 @@ public class YoincBotListener extends ListenerAdapter {
                 } else {
                     if (!isUserInVoiceChannel(member, guild.getVoiceChannels(), true)) {
                         event.reply("You need to be in a voice channel to use this command").setEphemeral(true).queue();
-                    //TODO change this back - i only added this for testing (enjinia brain)
-                    } else if (global_voiceChannelMembers.size() < 1) {
+                    } else if (global_voiceChannelMembers.size() <= 2) {
                         event.reply("You need more than 2 people to play Chameleon").setEphemeral(true).queue();
                     } else {
                         event.reply("Starting a new game of Chameleon").queue(response -> {
@@ -188,7 +181,7 @@ public class YoincBotListener extends ListenerAdapter {
                                     sb.setLength(sb.length() - 1);
                                     threadChannel.sendMessage(sb.toString()).queue();
                                     chameleon = global_voiceChannelMembers.get(new Random().nextInt(global_voiceChannelMembers.size()));
-                                    threadChannel.sendMessage("We have a chameleon! Good luck " + chameleon.getEffectiveName() +"!").queue();
+                                    threadChannel.sendMessage("We have a chameleon! Good luck!").queue();
                                     threadChannel.sendMessage("Sending the word now...").queue();
 
                                     String word = entry.getValue().get(new Random().nextInt(entry.getValue().size()));
@@ -242,7 +235,11 @@ public class YoincBotListener extends ListenerAdapter {
 
         if (initial) {
             global_voiceChannel = voiceChannel;
-            global_voiceChannelMembers = voiceChannel.getMembers();
+            for(Member m : voiceChannel.getMembers()) {
+                if(m.getVoiceState() != null && !m.getVoiceState().isDeafened() && !m.getVoiceState().isSelfDeafened() && !m.getVoiceState().isMuted() && !m.getVoiceState().isSelfMuted()) {
+                    global_voiceChannelMembers.add(m);
+                }
+            }
         }
         return true;
     }
