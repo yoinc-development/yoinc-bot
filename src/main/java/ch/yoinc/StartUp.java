@@ -26,7 +26,7 @@ public class StartUp {
             properties.load(inputStream);
 
             JDA jda = JDABuilder.createDefault(properties.getProperty("discord.api"))
-                    .addEventListeners(new YoincBotListener())
+                    .addEventListeners(new YoincBotListener(properties))
                     .setChunkingFilter(ChunkingFilter.ALL)
                     .setMemberCachePolicy(MemberCachePolicy.ALL)
                     .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.DIRECT_MESSAGES)

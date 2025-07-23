@@ -11,6 +11,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.util.Properties;
+
 public class YoincBotListener extends ListenerAdapter {
 
     //commands
@@ -19,8 +21,8 @@ public class YoincBotListener extends ListenerAdapter {
     //services
     public DiscordService discordService;
 
-    public YoincBotListener() {
-        discordService = new DiscordService();
+    public YoincBotListener(Properties properties) {
+        discordService = new DiscordService(properties);
     }
 
     @Override

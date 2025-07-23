@@ -7,8 +7,15 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.util.List;
+import java.util.Properties;
 
 public class DiscordService {
+
+    Properties properties;
+
+    public DiscordService(Properties properties) {
+        this.properties = properties;
+    }
 
     public boolean isUserInVoiceChannel(Member member, List<VoiceChannel> voiceChannels) {
         VoiceChannel voiceChannel = voiceChannels.stream()
@@ -42,7 +49,7 @@ public class DiscordService {
             //thread is not locked or closed
             if (!event.getChannel().asThreadChannel().isLocked() && !event.getChannel().asThreadChannel().isArchived()) {
                 //the thread owner is the bot
-                if (event.getChannel().asThreadChannel().getOwner().getId().equals("bot ID")) {
+                if (event.getChannel().asThreadChannel().getOwner().getId().equals(properties.getProperty("discord.bot"))) {
                     //the author of the message is not the bot and is currently in a voice channel
                     if (!event.getAuthor().isBot() && isUserInVoiceChannel(member, guild.getVoiceChannels())) {
                         return true;
