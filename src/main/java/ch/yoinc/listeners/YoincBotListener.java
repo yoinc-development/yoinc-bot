@@ -1,6 +1,6 @@
 package ch.yoinc.listeners;
 
-import ch.yoinc.DiscordService;
+import ch.yoinc.services.DiscordService;
 import ch.yoinc.commands.ChameleonCommand;
 import ch.yoinc.commands.StreetsCommand;
 import net.dv8tion.jda.api.entities.Guild;

@@ -1,6 +1,7 @@
-package ch.yoinc;
+package ch.yoinc.services;
 
 
+import ch.yoinc.StartUp;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -140,5 +142,23 @@ public class DiscordServiceTest {
         when(voiceChannel.getMembers()).thenReturn(List.of(memberActive, memberInactive));
 
         assertEquals(0, discordService.getAllActiveVoiceChannelMembers(voiceChannel).size());
+    }
+
+    @Test
+    public void testGetCurrentVoiceChannel() {
+        Member member = Mockito.mock(Member.class);
+
+        VoiceChannel voiceChannelOne = Mockito.mock(VoiceChannel.class);
+        when(voiceChannelOne.getMembers()).thenReturn(List.of(member));
+
+        VoiceChannel voiceChannelTwo = Mockito.mock(VoiceChannel.class);
+        when(voiceChannelTwo.getMembers()).thenReturn(new ArrayList<Member>());
+
+        VoiceChannel voiceChannelThree = Mockito.mock(VoiceChannel.class);
+        when(voiceChannelThree.getMembers()).thenReturn(new ArrayList<Member>());
+
+        List<VoiceChannel> voiceChannels = List.of(voiceChannelOne, voiceChannelTwo, voiceChannelThree);
+
+        assertEquals(voiceChannelOne, discordService.getCurrentVoiceChannel(member, voiceChannels));
     }
 }
