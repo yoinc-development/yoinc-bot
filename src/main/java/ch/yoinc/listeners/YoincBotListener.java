@@ -2,6 +2,7 @@ package ch.yoinc.listeners;
 
 import ch.yoinc.DiscordService;
 import ch.yoinc.commands.ChameleonCommand;
+import ch.yoinc.commands.StreetsCommand;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.Channel;
@@ -17,6 +18,7 @@ public class YoincBotListener extends ListenerAdapter {
 
     //commands
     private ChameleonCommand chameleonCommand;
+    private StreetsCommand streetsCommand;
 
     //services
     public DiscordService discordService;
@@ -39,6 +41,8 @@ public class YoincBotListener extends ListenerAdapter {
         if (!event.getUser().isBot()) {
             if (chameleonCommand != null && chameleonCommand.running && event.getMessageId().equals(chameleonCommand.global_voteMessageID)) {
                 chameleonCommand.vote(event);
+            } else if(streetsCommand != null && streetsCommand.isReactingCorrectly(event.getUser().getId(), event.getChannel().getId(), event.getReaction().getEmoji().asUnicode().getAsCodepoints().toLowerCase())){
+                streetsCommand.gamble(event, event.getChannel().getId());
             }
         }
     }
@@ -66,6 +70,17 @@ public class YoincBotListener extends ListenerAdapter {
                         chameleonCommand.startCommand(event);
                     } else {
                         event.reply("A game of Chameleon is already in progress in a channel").setEphemeral(true).queue();
+                    }
+                }
+            } else if("streets".equals(event.getName())) {
+                if(streetsCommand == null) {
+                    streetsCommand = new StreetsCommand(discordService);
+                    streetsCommand.startCommand(event);
+                } else {
+                    if(streetsCommand.isUserInSession(member.getUser().getId(), null)) {
+                        event.reply("A game of Streets is already in progress").setEphemeral(true).queue();
+                    } else {
+                        streetsCommand.startCommand(event);
                     }
                 }
             }
