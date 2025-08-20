@@ -34,7 +34,8 @@ public class StartUp {
 
             jda.getPresence().setActivity(Activity.playing("YOINC.ch"));
             jda.updateCommands().addCommands(
-                    Commands.slash("chameleon", "Start a game of Chameleon.")
+                    Commands.slash("chameleon", "Start a game of Chameleon."),
+                    Commands.slash("streets", "Start a game of Streets.")
             ).queue();
 
             jda.awaitReady();
