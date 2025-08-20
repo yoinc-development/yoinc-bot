@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 public class DiscordService {
 
@@ -15,6 +16,20 @@ public class DiscordService {
 
     public DiscordService(Properties properties) {
         this.properties = properties;
+    }
+
+    public void cleanMessage(MessageReceivedEvent event) {
+        if(isHumanInValidPermissionChannel(event)) {
+            String messageContent = event.getMessage().getContentRaw();
+            String newMessageContent = "";
+            String regex = "(https://)(www\\.)?(x\\.com|twitter\\.com)";
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            if (pattern.matcher(messageContent).find()) {
+                newMessageContent = messageContent.replaceAll(regex, "https://www.xcancel.com");
+                event.getMessage().delete().queue();
+                event.getMessage().reply(newMessageContent).queue();
+            }
+        }
     }
 
     public boolean isUserInVoiceChannel(Member member, List<VoiceChannel> voiceChannels) {
@@ -55,6 +70,17 @@ public class DiscordService {
                         return true;
                     }
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean isHumanInValidPermissionChannel(MessageReceivedEvent event) {
+        if(!event.getAuthor().isBot()) {
+            if(event.getChannel().getType().equals(ChannelType.GUILD_PUBLIC_THREAD) ||
+                    event.getChannel().getType().equals(ChannelType.GUILD_PRIVATE_THREAD) ||
+                    event.getChannel().getType().equals(ChannelType.TEXT)) {
+                return true;
             }
         }
         return false;
