@@ -1,6 +1,5 @@
 package ch.yoinc.commands;
 
-import ch.yoinc.services.DiscordService;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -8,25 +7,24 @@ import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StreetsCommand implements Command {
 
-    private final DiscordService discordService;
-    private final Map<String, String> activeGames;
+    private final ConcurrentHashMap<String, String> activeGames;
+    private final ConcurrentHashMap<String, Integer> scoreCollection;
     private final Random random;
 
-    public final String EMOJI_UPWARDS = "u+2b06";
-    public final String EMOJI_DOWNWARDS = "u+2b07";
+    private static final String EMOJI_UPWARDS = "u+2b06";
+    private static final String EMOJI_DOWNWARDS = "u+2b07";
 
-    public StreetsCommand(DiscordService discordService) {
-        this.discordService = discordService;
-        activeGames = new HashMap<>();
+    public StreetsCommand() {
+        activeGames = new ConcurrentHashMap<>();
+        scoreCollection = new ConcurrentHashMap<>();
         this.random = new Random();
     }
 
@@ -37,14 +35,15 @@ public class StreetsCommand implements Command {
         event.getChannel().asTextChannel().createThreadChannel(member.getEffectiveName() + "'s game of Streets").queue(threadChannel ->
         {
             activeGames.put(threadChannel.getId(), member.getUser().getId());
+            scoreCollection.put(member.getUser().getId(), 0);
             gamble(event, threadChannel.getId());
         });
     }
 
     public void gamble(Event event, String threadID) {
         if (event instanceof SlashCommandInteractionEvent) {
-            int number = random.nextInt(10) + 1;
-            event.getJDA().getThreadChannelById(threadID).sendMessage("Welcome to Street. Will the next number be higher or lower than: **" + number + "**").queue(message -> {
+            event.getJDA().getThreadChannelById(threadID).sendMessage("Welcome to Streets.\nThe game is simple: Predict if the next number will be higher or lower. The number is between 1 and 10. For each correct prediction you get 1 point.").queue();
+            event.getJDA().getThreadChannelById(threadID).sendMessage("Will the next number be higher or lower than: **" + (random.nextInt(10) + 1) + "**").queue(message -> {
                         message.addReaction(Emoji.fromUnicode(EMOJI_UPWARDS)).queue();
                         message.addReaction(Emoji.fromUnicode(EMOJI_DOWNWARDS)).queue();
                     }
@@ -54,8 +53,6 @@ public class StreetsCommand implements Command {
             AtomicReference<List<MessageReaction>> reactions = new AtomicReference<>();
             AtomicReference<String> numberFromMessage = new AtomicReference<>();
 
-            int newNumber = random.nextInt(10) + 1;
-
             ((MessageReactionAddEvent) event).retrieveMessage().queue(message -> {
                 reactions.set(message.getReactions());
                 numberFromMessage.set(message.getContentRaw().split("\\*\\*")[1]);
@@ -64,6 +61,7 @@ public class StreetsCommand implements Command {
             future.join();
 
             String reaction = ((MessageReactionAddEvent) event).getReaction().getEmoji().asUnicode().getAsCodepoints().toLowerCase();
+            int newNumber = random.nextInt(10) + 1;
             switch (reaction) {
                 case EMOJI_UPWARDS:
                     if (newNumber >= Integer.parseInt(numberFromMessage.get())) {
@@ -73,10 +71,13 @@ public class StreetsCommand implements Command {
                         });
                         ((MessageReactionAddEvent) event).retrieveMessage().queue(message -> {
                             message.clearReactions().queue();
+                            message.delete().queue();
                         });
+                        scoreCollection.merge(((MessageReactionAddEvent) event).getMember().getId(), 1, Integer::sum);
                     } else {
                         CompletableFuture<Void> deletionFuture = new CompletableFuture<>();
-                        event.getJDA().getThreadChannelById(threadID).sendMessage("You lost! The next number was: **" + newNumber + "**").queue();
+                        event.getJDA().getThreadChannelById(threadID).sendMessage("You lost! The next number was: **" + newNumber + "**.\nYour total score: " + scoreCollection.get(((MessageReactionAddEvent) event).getMember().getId())).queue();
+                        scoreCollection.remove(((MessageReactionAddEvent) event).getMember().getId());
                         ((MessageReactionAddEvent) event).retrieveMessage().queue(message -> {
                             message.clearReactions().queue();
                             deletionFuture.complete(null);
@@ -94,10 +95,13 @@ public class StreetsCommand implements Command {
                         });
                         ((MessageReactionAddEvent) event).retrieveMessage().queue(message -> {
                             message.clearReactions().queue();
+                            message.delete().queue();
                         });
+                        scoreCollection.merge(((MessageReactionAddEvent) event).getMember().getId(), 1, Integer::sum);
                     } else {
                         CompletableFuture<Void> deletionFuture = new CompletableFuture<>();
-                        event.getJDA().getThreadChannelById(threadID).sendMessage("You lost! The next number was: **" + newNumber + "**").queue();
+                        event.getJDA().getThreadChannelById(threadID).sendMessage("You lost! The next number was: **" + newNumber + "**.\nYour total score: " + scoreCollection.get(((MessageReactionAddEvent) event).getMember().getId())).queue();
+                        scoreCollection.remove(((MessageReactionAddEvent) event).getMember().getId());
                         ((MessageReactionAddEvent) event).retrieveMessage().queue(message -> {
                             message.clearReactions().queue();
                             deletionFuture.complete(null);
