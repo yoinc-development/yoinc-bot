@@ -1,4 +1,4 @@
-package ch.yoinc;
+package ch.yoinc.services;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
