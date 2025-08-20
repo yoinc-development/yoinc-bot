@@ -44,6 +44,7 @@ public class YoincBotListener extends ListenerAdapter {
                 chameleonCommand.messageReceived(event);
             }
         }
+        discordService.cleanMessage(event);
     }
 
     @Override
@@ -51,7 +52,7 @@ public class YoincBotListener extends ListenerAdapter {
         if (event.getUser() != null && !event.getUser().isBot()) {
             if (chameleonCommand != null && chameleonCommand.running && event.getMessageId().equals(chameleonCommand.global_voteMessageID)) {
                 chameleonCommand.vote(event);
-            } else if(streetsCommand != null && streetsCommand.isReactingCorrectly(event.getUser().getId(), event.getChannel().getId(), event.getReaction().getEmoji().asUnicode().getAsCodepoints().toLowerCase())){
+            } else if (streetsCommand != null && streetsCommand.isReactingCorrectly(event.getUser().getId(), event.getChannel().getId(), event.getReaction().getEmoji().asUnicode().getAsCodepoints().toLowerCase())) {
                 streetsCommand.gamble(event, event.getChannel().getId());
             }
         }
@@ -82,12 +83,12 @@ public class YoincBotListener extends ListenerAdapter {
                         event.reply("A game of Chameleon is already in progress in a channel").setEphemeral(true).queue();
                     }
                 }
-            } else if("streets".equals(event.getName())) {
-                if(streetsCommand == null) {
+            } else if ("streets".equals(event.getName())) {
+                if (streetsCommand == null) {
                     streetsCommand = new StreetsCommand();
                     streetsCommand.startCommand(event);
                 } else {
-                    if(streetsCommand.isUserInSession(member.getUser().getId(), null)) {
+                    if (streetsCommand.isUserInSession(member.getUser().getId(), null)) {
                         event.reply("A game of Streets is already in progress").setEphemeral(true).queue();
                     } else {
                         streetsCommand.startCommand(event);
@@ -98,8 +99,8 @@ public class YoincBotListener extends ListenerAdapter {
     }
 
     @Override
-    public void onReady(ReadyEvent event){
+    public void onReady(ReadyEvent event) {
         JDA jda = event.getJDA();
-        CompletableFuture.runAsync( () -> schedulerService.scheduleAllTasks(jda, properties));
+        CompletableFuture.runAsync(() -> schedulerService.scheduleAllTasks(jda, properties));
     }
 }
