@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import org.codehaus.plexus.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +21,7 @@ public class ChameleonCommand implements Command {
 
     public boolean running = false;
 
-    DiscordService discordService;
+    private final DiscordService discordService;
 
     public VoiceChannel global_voiceChannel;
     public List<Member> global_voiceChannelMembers;
@@ -50,7 +49,7 @@ public class ChameleonCommand implements Command {
         global_voiceChannel = discordService.getCurrentVoiceChannel(member, guild.getVoiceChannels());
         global_voiceChannelMembers = discordService.getAllActiveVoiceChannelMembers(global_voiceChannel);
 
-        if (global_voiceChannelMembers.size() >= 1) {
+        if (global_voiceChannelMembers.size() >= 3) {
             event.reply("Starting game...").setEphemeral(true).queue();
 
             running = true;
@@ -72,7 +71,7 @@ public class ChameleonCommand implements Command {
                 threadChannel.sendMessage("We have a chameleon! Good luck!").queue();
                 threadChannel.sendMessage("Sending the word now...").queue();
 
-                String word = categories.get(chosenCategory).get(categories.get(chosenCategory).size() - 1);
+                String word = categories.get(chosenCategory).getLast();
                 for (Member m : global_voiceChannelMembers) {
                     if (!m.equals(chameleon)) {
                         m.getUser().openPrivateChannel().queue(privateChannel -> {
@@ -91,6 +90,12 @@ public class ChameleonCommand implements Command {
         }
     }
 
+
+    /**
+     * Handles the chameleon game message received events.
+     *
+     * @param event The message received event
+     */
     public void messageReceived(MessageReceivedEvent event) {
         Guild guild = event.getGuild();
         Member member = event.getMember();
@@ -113,6 +118,11 @@ public class ChameleonCommand implements Command {
         }
     }
 
+    /**
+     * Handles the vote on a game of Chameleon.
+     *
+     * @param event The message reaction add event
+     */
     public void vote(MessageReactionAddEvent event) {
         User reactingUser = event.getUser();
         event.retrieveMessage().queue(message -> {
@@ -176,6 +186,11 @@ public class ChameleonCommand implements Command {
         });
     }
 
+    /**
+     * Ends the game of Chameleon.
+     *
+     * @param event The message reaction add event
+     */
     private void endGame(MessageReactionAddEvent event) {
         AtomicReference<MessageReaction> topReaction = new AtomicReference<>();
         AtomicInteger count = new AtomicInteger();
@@ -196,7 +211,7 @@ public class ChameleonCommand implements Command {
                 }
             }
 
-            if (StringUtils.isEmpty(votedResult)) {
+            if (!votedResult.isEmpty()) {
                 event.getChannel().sendMessage("That's the end of the game! The chameleon is " + chameleon.getEffectiveName() + ".\nAnd you voted for the emoji " + topReaction.get().getEmoji().getName() + ".").queue(success -> {
                     chameleon = null;
                     global_voiceChannel = null;

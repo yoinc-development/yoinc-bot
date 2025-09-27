@@ -1,6 +1,7 @@
 package ch.yoinc.services;
 
 import ch.yoinc.StartUp;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
@@ -27,14 +28,10 @@ public class DiscordServiceTest {
     Properties properties;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws Exception {
         properties = new Properties();
-        try {
-            InputStream inputStream = StartUp.class.getClassLoader().getResourceAsStream("config.properties");
-            properties.load(inputStream);
-        } catch (Exception e) {
-            System.out.println("Properties could not be loaded: " + e.getMessage());
-        }
+        InputStream inputStream = StartUp.class.getClassLoader().getResourceAsStream("config.properties");
+        properties.load(inputStream);
         discordService = new DiscordService(properties);
     }
 
@@ -89,7 +86,7 @@ public class DiscordServiceTest {
     public void testCleanMessageMultipleUrls() {
         String originalMessage = "Check these: https://x.com/first and https://twitter.com/second";
         String expectedMessage = "Check these: https://www.xcancel.com/first and https://www.xcancel.com/second";
-        
+
         MessageReceivedEvent event = createMockEvent(originalMessage, false, ChannelType.TEXT);
         discordService.cleanMessage(event);
         verify(event.getMessage()).delete();
@@ -118,7 +115,10 @@ public class DiscordServiceTest {
         when(event.getChannel().asThreadChannel().isLocked()).thenReturn(false);
         when(event.getChannel().asThreadChannel().isLocked()).thenReturn(false);
         when(event.getChannel().asThreadChannel().getOwner()).thenReturn(mock(Member.class));
-        when(event.getChannel().asThreadChannel().getOwner().getId()).thenReturn(properties.getProperty("discord.bot"));
+        when(event.getChannel().asThreadChannel().getOwner().getId()).thenReturn("1234");
+        when(event.getJDA()).thenReturn(mock(JDA.class));
+        when(event.getJDA().getSelfUser()).thenReturn(mock(SelfUser.class));
+        when(event.getJDA().getSelfUser().getId()).thenReturn("1234");
         when(event.getAuthor()).thenReturn(mock(User.class));
         when(event.getAuthor().isBot()).thenReturn(false);
 
@@ -143,7 +143,10 @@ public class DiscordServiceTest {
         when(event.getChannel().asThreadChannel().isLocked()).thenReturn(false);
         when(event.getChannel().asThreadChannel().isLocked()).thenReturn(false);
         when(event.getChannel().asThreadChannel().getOwner()).thenReturn(mock(Member.class));
-        when(event.getChannel().asThreadChannel().getOwner().getId()).thenReturn(properties.getProperty("discord.bot"));
+        when(event.getChannel().asThreadChannel().getOwner().getId()).thenReturn("1234");
+        when(event.getJDA()).thenReturn(mock(JDA.class));
+        when(event.getJDA().getSelfUser()).thenReturn(mock(SelfUser.class));
+        when(event.getJDA().getSelfUser().getId()).thenReturn("1234");
         when(event.getAuthor()).thenReturn(mock(User.class));
         when(event.getAuthor().isBot()).thenReturn(false);
 
@@ -167,7 +170,10 @@ public class DiscordServiceTest {
         when(event.getChannel().asThreadChannel().isLocked()).thenReturn(false);
         when(event.getChannel().asThreadChannel().isLocked()).thenReturn(false);
         when(event.getChannel().asThreadChannel().getOwner()).thenReturn(mock(Member.class));
-        when(event.getChannel().asThreadChannel().getOwner().getId()).thenReturn(properties.getProperty("discord.bot"));
+        when(event.getChannel().asThreadChannel().getOwner().getId()).thenReturn("1234");
+        when(event.getJDA()).thenReturn(mock(JDA.class));
+        when(event.getJDA().getSelfUser()).thenReturn(mock(SelfUser.class));
+        when(event.getJDA().getSelfUser().getId()).thenReturn("1234");
         when(event.getAuthor()).thenReturn(mock(User.class));
         when(event.getAuthor().isBot()).thenReturn(true);
 
