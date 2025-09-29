@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 
 public class DiscordService extends BaseService {
 
+    private final String XCANCEL_URL = "https://www.xcancel.com";
+
     public DiscordService(Properties properties) {
         super(properties);
     }
@@ -30,7 +32,7 @@ public class DiscordService extends BaseService {
             String regex = "(https://)(www\\.)?(x\\.com|twitter\\.com)";
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             if (pattern.matcher(messageContent).find()) {
-                newMessageContent = messageContent.replaceAll(regex, properties.getProperty("xcancel.url"));
+                newMessageContent = messageContent.replaceAll(regex, XCANCEL_URL);
                 event.getMessage().delete().queue();
                 event.getMessage().reply(newMessageContent).queue();
             }
