@@ -5,6 +5,7 @@ import ch.yoinc.models.bungie.CharacterResponse;
 import ch.yoinc.models.bungie.ResponseData;
 import ch.yoinc.services.BungieService;
 import ch.yoinc.services.DataService;
+import ch.yoinc.services.DiscordService;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 
@@ -19,6 +20,7 @@ public class DestinyTask implements ScheduledTask {
     public void execute(JDA jda, Properties properties) {
         DataService dataService = new DataService(properties);
         BungieService bungieService = new BungieService(properties);
+        DiscordService discordService = new DiscordService(properties);
 
         List<InternalUser> destinyInternalUsers = dataService.getAllDestinyUsers();
         for (InternalUser user : destinyInternalUsers) {
@@ -28,12 +30,22 @@ public class DestinyTask implements ScheduledTask {
                 for (Map.Entry<String, CharacterResponse> characterResponse : characterResponseList.entrySet()) {
                     boolean isLightHigher = bungieService.isLightHigher(user.userID, characterResponse.getValue());
                     if (isLightHigher) {
-                        EmbedBuilder embedBuilder = new EmbedBuilder();
-                        embedBuilder.setTitle("New light level for " + responseData.Response.profile.data.userInfo.displayName);
-                        embedBuilder.setAuthor("Powered by YOINC.", "https://www.yoinc.ch");
-                        embedBuilder.setImage(properties.getProperty("bungie.url") + responseData.Response.characters.data.get(characterResponse.getKey()).emblemPath);
-                        embedBuilder.setDescription("Light level: " + responseData.Response.characters.data.get(characterResponse.getKey()).light);
-                        embedBuilder.setFooter("Updated at " + responseData.Response.profile.data.dateLastPlayed);
+                        String description = switch (responseData.Response.characters.data.get(characterResponse.getKey()).classType) {
+                            case 0 ->
+                                    "Their Titan has a new power level: " + responseData.Response.characters.data.get(characterResponse.getKey()).light;
+                            case 1 ->
+                                    "Their Hunter has a new power level: " + responseData.Response.characters.data.get(characterResponse.getKey()).light;
+                            case 2 ->
+                                    "Their Warlock has a new power level: " + responseData.Response.characters.data.get(characterResponse.getKey()).light;
+                            default ->
+                                    "Their character has a new power level: " + responseData.Response.characters.data.get(characterResponse.getKey()).light;
+                        };
+                        EmbedBuilder embedBuilder = discordService.createEmbedBuilder(
+                                "New light level for " + responseData.Response.profile.data.userInfo.displayName,
+                                description,
+                                properties.getProperty("bungie.url") + responseData.Response.characters.data.get(characterResponse.getKey()).emblemPath,
+                                "Updated at " + responseData.Response.profile.data.dateLastPlayed
+                        );
                         Objects.requireNonNull(jda.getTextChannelById(properties.getProperty("discord.destinychannel"))).sendMessageEmbeds(embedBuilder.build()).queue();
                     }
                 }
