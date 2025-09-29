@@ -1,5 +1,6 @@
 package ch.yoinc.services;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -39,7 +40,7 @@ public class DiscordService extends BaseService {
     /**
      * Checks if a user is in a voice channel.
      *
-     * @param member the member to check
+     * @param member        the member to check
      * @param voiceChannels the possible voice channels
      * @return true if the member is in a voice channel, false otherwise
      */
@@ -55,7 +56,7 @@ public class DiscordService extends BaseService {
     /**
      * Gets the current voice channel of a member.
      *
-     * @param member the member to check
+     * @param member        the member to check
      * @param voiceChannels the possible voice channels
      * @return the current voice channel of the member, null if the member is not in a voice channel
      */
@@ -81,9 +82,9 @@ public class DiscordService extends BaseService {
     /**
      * Checks if a thread is active.
      *
-     * @param event the message received event
+     * @param event  the message received event
      * @param member the member to check
-     * @param guild the guild containing the thread
+     * @param guild  the guild containing the thread
      * @return true if the thread is active, false otherwise
      */
     public boolean isThreadActive(MessageReceivedEvent event, Member member, Guild guild) {
@@ -102,6 +103,23 @@ public class DiscordService extends BaseService {
     }
 
     /**
+     * Creates an embed builder with the given title, description, image URL, and footer.
+     *
+     * @param title       the title of the embed
+     * @param description the description of the embed
+     * @param imageUrl    the image URL of the embed
+     * @param footer      the footer of the embed
+     * @return the created embed builder
+     */
+    public EmbedBuilder createEmbedBuilder(String title, String description, String imageUrl, String footer) {
+        return new YoincEmbedBuilder()
+                .setTitle(title)
+                .setDescription(description)
+                .setImage(imageUrl)
+                .setFooter(footer);
+    }
+
+    /**
      * Checks if the event is from a human and from a valid channel.
      *
      * @param event the message received event
@@ -114,5 +132,12 @@ public class DiscordService extends BaseService {
                     event.getChannel().getType().equals(ChannelType.TEXT);
         }
         return false;
+    }
+
+    public static class YoincEmbedBuilder extends EmbedBuilder {
+        public YoincEmbedBuilder() {
+            super();
+            this.setAuthor("Powered by YOINC.", "https://www.yoinc.ch");
+        }
     }
 }
