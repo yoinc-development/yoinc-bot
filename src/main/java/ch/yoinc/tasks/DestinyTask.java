@@ -16,6 +16,8 @@ import java.util.Properties;
 
 public class DestinyTask implements ScheduledTask {
 
+    private final String BUNGIE_URL = "https://www.bungie.net";
+
     @Override
     public void execute(JDA jda, Properties properties) {
         DataService dataService = new DataService(properties);
@@ -43,7 +45,7 @@ public class DestinyTask implements ScheduledTask {
                         EmbedBuilder embedBuilder = discordService.createEmbedBuilder(
                                 "New light level for " + responseData.Response.profile.data.userInfo.displayName,
                                 description,
-                                properties.getProperty("bungie.url") + responseData.Response.characters.data.get(characterResponse.getKey()).emblemPath,
+                                BUNGIE_URL + responseData.Response.characters.data.get(characterResponse.getKey()).emblemPath,
                                 "Updated at " + responseData.Response.profile.data.dateLastPlayed
                         );
                         Objects.requireNonNull(jda.getTextChannelById(properties.getProperty("discord.destinychannel"))).sendMessageEmbeds(embedBuilder.build()).queue();
