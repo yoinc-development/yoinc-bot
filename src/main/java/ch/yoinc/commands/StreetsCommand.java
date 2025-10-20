@@ -40,6 +40,12 @@ public class StreetsCommand implements Command {
         });
     }
 
+    /**
+     * Start or continue a game of Streets.
+     *
+     * @param event    The event to handle
+     * @param threadID The ID of the thread channel
+     */
     public void gamble(Event event, String threadID) {
         if (event instanceof SlashCommandInteractionEvent) {
             event.getJDA().getThreadChannelById(threadID).sendMessage("Welcome to Streets.\nThe game is simple: Predict if the next number will be higher or lower. The number is between 1 and 10. For each correct prediction you get 1 point.").queue();
@@ -116,6 +122,13 @@ public class StreetsCommand implements Command {
         }
     }
 
+    /**
+     * Checks if the user is in a game session.
+     *
+     * @param discordID The user's Discord ID
+     * @param threadID The thread ID
+     * @return True if the user is in a game session, false otherwise
+     */
     public boolean isUserInSession(String discordID, String threadID) {
         if (threadID == null) {
             return activeGames.containsValue(discordID);
@@ -126,9 +139,7 @@ public class StreetsCommand implements Command {
 
     public boolean isReactingCorrectly(String discordID, String threadID, String emojiCodepoints) {
         if (isUserInSession(discordID, threadID)) {
-            if (emojiCodepoints.equals(EMOJI_UPWARDS) || emojiCodepoints.equals(EMOJI_DOWNWARDS)) {
-                return true;
-            }
+            return emojiCodepoints.equals(EMOJI_UPWARDS) || emojiCodepoints.equals(EMOJI_DOWNWARDS);
         }
         return false;
     }
