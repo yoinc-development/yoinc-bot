@@ -3,12 +3,8 @@ package ch.yoinc.services;
 import ch.yoinc.models.bungie.CharacterResponse;
 import ch.yoinc.models.bungie.ResponseData;
 
-import java.util.Properties;
-
 public class BungieService extends BaseService {
-    public BungieService(Properties properties) {
-        super(properties);
-    }
+    public BungieService() {}
 
     /**
      * Checks if a user's light level is higher than the current light level.

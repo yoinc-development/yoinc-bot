@@ -20,9 +20,9 @@ public class DestinyTask implements ScheduledTask {
 
     @Override
     public void execute(JDA jda, Properties properties) {
-        DataService dataService = new DataService(properties);
-        BungieService bungieService = new BungieService(properties);
-        DiscordService discordService = new DiscordService(properties);
+        DataService dataService = new DataService();
+        BungieService bungieService = new BungieService();
+        DiscordService discordService = new DiscordService();
 
         List<InternalUser> destinyInternalUsers = dataService.getAllDestinyUsers();
         for (InternalUser user : destinyInternalUsers) {
