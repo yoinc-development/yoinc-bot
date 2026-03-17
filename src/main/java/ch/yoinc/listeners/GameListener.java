@@ -22,8 +22,8 @@ public class GameListener extends ListenerAdapter {
     private StreetsCommand streetsCommand;
     private final DiscordService discordService;
 
-    public GameListener(Properties properties) {
-        discordService = new DiscordService(properties);
+    public GameListener() {
+        discordService = new DiscordService();
     }
 
     @Override
