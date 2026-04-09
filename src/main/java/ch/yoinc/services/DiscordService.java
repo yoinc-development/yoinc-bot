@@ -1,23 +1,32 @@
 package ch.yoinc.services;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.commands.CommandInteraction;
+import net.dv8tion.jda.api.modals.Modal;
+import net.dv8tion.jda.api.utils.FileUpload;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 public class DiscordService extends BaseService {
 
     private final String XCANCEL_URL = "https://www.xcancel.com";
 
-    public DiscordService(Properties properties) {
-        super(properties);
+    public DiscordService() {
     }
 
     /**
@@ -102,6 +111,61 @@ public class DiscordService extends BaseService {
             }
         }
         return false;
+    }
+
+    public boolean isAllowedUserGroup(CommandInteraction event) {
+        return Objects.requireNonNull(event.getMember()).getRoles().stream().anyMatch(r -> r.getId().equals(properties.getProperty("discord.allowedUserGroup")));
+    }
+
+    public Modal createMoveMessageModal(MessageContextInteractionEvent event) {
+        EntitySelectMenu channelSelect = EntitySelectMenu.create("channelSelect", EntitySelectMenu.SelectTarget.CHANNEL)
+                .setPlaceholder("What channel do you want to move the message to?")
+                .setChannelTypes(ChannelType.TEXT)
+                .setRequired(true)
+                .build();
+
+        String modalId = "move-message-modal:%s:%s".formatted(event.getChannel().getId(), event.getTarget().getId());
+        return Modal.create(modalId, "Move to which channel?")
+                .addComponents(Label.of("Select channel", channelSelect))
+                .build();
+    }
+
+    public void moveMessage(ModalInteractionEvent event) {
+        String[] parts = event.getModalId().split(":");
+        String sourceChannelId = parts[1];
+        String messageId = parts[2];
+
+        TextChannel source = event.getJDA().getTextChannelById(sourceChannelId);
+        TextChannel destination = event.getGuild().getChannelById(TextChannel.class, event.getValue("channelSelect").getAsMentions().getChannels().getFirst().getId());
+
+        Objects.requireNonNull(source).retrieveMessageById(messageId).queue(message -> {
+            event.reply("Message moved.").setEphemeral(true).queue();
+            String text = "%s send this message in another channel (%s): %s".formatted(message.getAuthor().getAsMention(), source.getAsMention(), message.getContentRaw());
+
+            List<Message.Attachment> attachments = message.getAttachments();
+            if (attachments.isEmpty()) {
+                Objects.requireNonNull(destination)
+                        .sendMessage(text)
+                        .addEmbeds(message.getEmbeds())
+                        .queue(_ -> message.delete().queue());
+            } else {
+                List<CompletableFuture<InputStream>> downloads = attachments.stream()
+                        .map(a -> a.getProxy().download())
+                        .toList();
+
+                CompletableFuture.allOf(downloads.toArray(new CompletableFuture[0])).thenAccept(_ -> {
+                    List<FileUpload> files = attachments.stream()
+                            .map(a -> FileUpload.fromData(downloads.get(attachments.indexOf(a)).join(), a.getFileName()))
+                            .toList();
+
+                    Objects.requireNonNull(destination)
+                            .sendMessage(text)
+                            .addEmbeds(message.getEmbeds())
+                            .addFiles(files)
+                            .queue(_ -> message.delete().queue());
+                });
+            }
+        });
     }
 
     /**

@@ -3,6 +3,8 @@ package ch.yoinc.services;
 import ch.yoinc.http.Connection;
 import ch.yoinc.http.ConnectionBuilder;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 public class BaseService {
@@ -11,8 +13,14 @@ public class BaseService {
     protected final Properties properties;
     protected final Connection connection;
 
-    public BaseService(Properties properties) {
-        this.properties = properties;
+    public BaseService() {
+        this.properties = new Properties();
+        try {
+            InputStream inputStream = BaseService.class.getClassLoader().getResourceAsStream("config.properties");
+            properties.load(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         if (sharedConnection == null) {
             sharedConnection = new ConnectionBuilder()
                     .bungieSettings(properties.getProperty("bungie.api"), properties.getProperty("bungie.key"))

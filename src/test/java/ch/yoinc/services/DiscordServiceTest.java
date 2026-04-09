@@ -1,6 +1,5 @@
 package ch.yoinc.services;
 
-import ch.yoinc.StartUp;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -13,10 +12,8 @@ import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -25,14 +22,9 @@ public class DiscordServiceTest {
 
     DiscordService discordService;
 
-    Properties properties;
-
     @BeforeEach
     public void setup() throws Exception {
-        properties = new Properties();
-        InputStream inputStream = StartUp.class.getClassLoader().getResourceAsStream("config.properties");
-        properties.load(inputStream);
-        discordService = new DiscordService(properties);
+        discordService = new DiscordService();
     }
 
     @Test
