@@ -6,15 +6,20 @@ import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.dv8tion.jda.api.interactions.commands.CommandInteraction;
 import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.util.List;
@@ -23,6 +28,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 public class DiscordService extends BaseService {
+
+    private final Logger logger = LogManager.getLogger(DiscordService.class);
 
     private final String XCANCEL_URL = "https://www.xcancel.com";
 
@@ -34,7 +41,7 @@ public class DiscordService extends BaseService {
      *
      * @param event the message received event
      */
-    public void cleanMessage(MessageReceivedEvent event) {
+    public void cleanMessage(@NotNull MessageReceivedEvent event) {
         if (isHumanInValidPermissionChannel(event)) {
             String messageContent = event.getMessage().getContentRaw();
             String newMessageContent;
@@ -45,6 +52,33 @@ public class DiscordService extends BaseService {
                 event.getMessage().delete().queue();
                 event.getMessage().reply(newMessageContent).queue();
             }
+        }
+    }
+
+    /**
+     * Gives a role to a user and removes all other roles. If addIdyet is true, the idyet role is also added.
+     *
+     * @param member   the member affected by the role change
+     * @param roleId   the roleId to be added
+     * @param addIdyet if true, the idyet role is also added
+     */
+    public void giveRoleToUser(@NotNull Member member, @NotNull String roleId, boolean addIdyet) {
+        List<Role> memberRoles = member.getRoles();
+        Role roleToAdd = Objects.requireNonNull(member.getGuild().getRoleById(roleId));
+
+        if (!memberRoles.contains(roleToAdd)) {
+            for (Role role : memberRoles) {
+                try {
+                    member.getGuild().removeRoleFromMember(member, role).queue();
+                } catch (HierarchyException ex) {
+                    logger.error(ex);
+                }
+            }
+
+            if (addIdyet) {
+                member.getGuild().addRoleToMember(member, Objects.requireNonNull(member.getGuild().getRoleById(properties.getProperty("discord.role.idyet")))).queue();
+            }
+            member.getGuild().addRoleToMember(member, roleToAdd).queue();
         }
     }
 
@@ -113,8 +147,14 @@ public class DiscordService extends BaseService {
         return false;
     }
 
-    public boolean isAllowedUserGroup(CommandInteraction event) {
-        return Objects.requireNonNull(event.getMember()).getRoles().stream().anyMatch(r -> r.getId().equals(properties.getProperty("discord.allowedUserGroup")));
+    /**
+     * Checks if a user is in the allowed role.
+     *
+     * @param event the event that triggered the user role check
+     * @return true if the user is in the allowed user role, false otherwise
+     */
+    public boolean hasAllowedRole(CommandInteraction event) {
+        return Objects.requireNonNull(event.getMember()).getRoles().stream().anyMatch(r -> r.getId().equals(properties.getProperty("discord.role.tieronebag")));
     }
 
     public Modal createMoveMessageModal(MessageContextInteractionEvent event) {
@@ -124,7 +164,7 @@ public class DiscordService extends BaseService {
                 .setRequired(true)
                 .build();
 
-        String modalId = "move-message-modal:%s:%s".formatted(event.getChannel().getId(), event.getTarget().getId());
+        String modalId = "move-message-modal:%s:%s".formatted(Objects.requireNonNull(event.getChannel()).getId(), event.getTarget().getId());
         return Modal.create(modalId, "Move to which channel?")
                 .addComponents(Label.of("Select channel", channelSelect))
                 .build();
@@ -136,7 +176,7 @@ public class DiscordService extends BaseService {
         String messageId = parts[2];
 
         TextChannel source = event.getJDA().getTextChannelById(sourceChannelId);
-        TextChannel destination = event.getGuild().getChannelById(TextChannel.class, event.getValue("channelSelect").getAsMentions().getChannels().getFirst().getId());
+        TextChannel destination = Objects.requireNonNull(event.getGuild()).getChannelById(TextChannel.class, Objects.requireNonNull(event.getValue("channelSelect")).getAsMentions().getChannels().getFirst().getId());
 
         Objects.requireNonNull(source).retrieveMessageById(messageId).queue(message -> {
             event.reply("Message moved.").setEphemeral(true).queue();

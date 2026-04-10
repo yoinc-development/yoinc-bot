@@ -48,7 +48,7 @@ public class DestinyTask implements ScheduledTask {
                                 BUNGIE_URL + responseData.Response.characters.data.get(characterResponse.getKey()).emblemPath,
                                 "Updated at " + responseData.Response.profile.data.dateLastPlayed
                         );
-                        Objects.requireNonNull(jda.getTextChannelById(properties.getProperty("discord.destinychannel"))).sendMessageEmbeds(embedBuilder.build()).queue();
+                        Objects.requireNonNull(jda.getTextChannelById(properties.getProperty("discord.channel.destiny"))).sendMessageEmbeds(embedBuilder.build()).queue();
                     }
                 }
             }
