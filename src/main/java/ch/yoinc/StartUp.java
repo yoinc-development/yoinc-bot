@@ -1,7 +1,6 @@
 package ch.yoinc;
 
 import ch.yoinc.dekarios.Dekarios;
-import ch.yoinc.listeners.GameListener;
 import ch.yoinc.listeners.YoincBotListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -34,8 +33,7 @@ public class StartUp {
             properties.load(inputStream);
 
             JDA jda = JDABuilder.createDefault(properties.getProperty("discord.key"))
-                    .addEventListeners(new YoincBotListener(properties),
-                            new GameListener())
+                    .addEventListeners(new YoincBotListener(properties))
                     .setChunkingFilter(ChunkingFilter.ALL)
                     .setMemberCachePolicy(MemberCachePolicy.ALL)
                     .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.DIRECT_MESSAGES)
@@ -43,9 +41,11 @@ public class StartUp {
 
             jda.getPresence().setActivity(Activity.playing("YOINC.ch"));
             jda.updateCommands().addCommands(
-                    Commands.slash("chameleon", "Start a game of Chameleon."),
-                    Commands.slash("streets", "Start a game of Streets."),
-                    Commands.context(Command.Type.MESSAGE, "Move message to another channel.")
+                    Commands.context(Command.Type.MESSAGE, "Move message to another channel."),
+                    Commands.context(Command.Type.USER, "Turn user into idyet."),
+                    Commands.context(Command.Type.USER, "Turn user into Bag."),
+                    Commands.context(Command.Type.USER, "Turn user into Tier 1 Bag."),
+                    Commands.context(Command.Type.USER, "Turn user into npc.")
             ).queue();
 
             jda.awaitReady();
