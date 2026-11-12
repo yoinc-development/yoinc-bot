@@ -10,8 +10,14 @@ public class ResponseProfile {
     @SerializedName("characters")
     public CharactersDataResponse characters;
 
+    @SerializedName("characterActivities")
+    public CharacterActivitiesDataResponse characterActivities;
+
     @SerializedName("profile")
     public ProfileDataResponse profile;
+
+    @SerializedName("profileTransitoryData")
+    public ProfileTransitoryDataResponse profileTransitoryData;
 
     @SerializedName("responseMintedTimestamp")
     public String responseMintedTimestamp;
