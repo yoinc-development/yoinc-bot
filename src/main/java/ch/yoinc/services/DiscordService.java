@@ -25,33 +25,36 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DiscordService extends BaseService {
 
     private final Logger logger = LogManager.getLogger(DiscordService.class);
 
-    private final String XCANCEL_URL = "https://www.xcancel.com";
+    private static final String XCANCEL_URL = "https://www.xcancel.com";
+
+    private static final Pattern X_LINK_PATTERN = Pattern.compile("https://(www\\.)?(x\\.com|twitter\\.com)(?![\\w-]|\\.\\w)", Pattern.CASE_INSENSITIVE);
 
     public DiscordService() {
     }
 
     /**
      * Cleans a message if it contains a link to X.com or Twitter.com.
+     * The cleaned message is posted before the original is deleted, so nothing is lost if the reply fails.
      *
      * @param event the message received event
      */
     public void cleanMessage(@NotNull MessageReceivedEvent event) {
-        if (isHumanInValidPermissionChannel(event)) {
-            String messageContent = event.getMessage().getContentRaw();
-            String newMessageContent;
-            String regex = "(https://)(www\\.)?(x\\.com|twitter\\.com)";
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            if (pattern.matcher(messageContent).find()) {
-                newMessageContent = messageContent.replaceAll(regex, XCANCEL_URL);
-                event.getMessage().delete().queue();
-                event.getMessage().reply(newMessageContent).queue();
-            }
+        if (!isHumanInValidPermissionChannel(event)) {
+            return;
+        }
+
+        String messageContent = event.getMessage().getContentRaw();
+        Matcher matcher = X_LINK_PATTERN.matcher(messageContent);
+        if (matcher.find()) {
+            String newMessageContent = matcher.replaceAll(Matcher.quoteReplacement(XCANCEL_URL));
+            event.getMessage().reply(newMessageContent).queue(_ -> event.getMessage().delete().queue());
         }
     }
 
