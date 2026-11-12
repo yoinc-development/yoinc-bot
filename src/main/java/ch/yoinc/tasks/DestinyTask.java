@@ -8,6 +8,8 @@ import ch.yoinc.services.DataService;
 import ch.yoinc.services.DiscordService;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,8 @@ import java.util.Objects;
 import java.util.Properties;
 
 public class DestinyTask implements ScheduledTask {
+
+    private final Logger logger = LogManager.getLogger(DestinyTask.class);
 
     private final String BUNGIE_URL = "https://www.bungie.net";
 
@@ -28,6 +32,11 @@ public class DestinyTask implements ScheduledTask {
         for (InternalUser user : destinyInternalUsers) {
             ResponseData responseData = bungieService.getProfile(user.bungieID);
             if (responseData != null) {
+                // prevent light levels to be read when the player is in an activity that increases their light, like a dungeon/raid etc
+                if (!bungieService.isSafeToCheckLight(responseData)) {
+                    logger.info("Skipping light check for user {}: player is in an activity", user.userID);
+                    continue;
+                }
                 Map<String, CharacterResponse> characterResponseList = responseData.Response.characters.data;
                 for (Map.Entry<String, CharacterResponse> characterResponse : characterResponseList.entrySet()) {
                     boolean isLightHigher = bungieService.isLightHigher(user.userID, characterResponse.getValue());

@@ -60,7 +60,7 @@ public class Connection {
     public ResponseData getProfile(String bungieID) {
         HttpRequest request;
         request = HttpRequest.newBuilder()
-                .uri(URI.create(bungieUrl + "/Destiny2/3/Profile/" + bungieID + "/?components=100,200,205"))
+                .uri(URI.create(bungieUrl + "/Destiny2/3/Profile/" + bungieID + "/?components=100,200,204,205,1000"))
                 .header("X-API-Key", bungieKey)
                 .GET()
                 .build();
