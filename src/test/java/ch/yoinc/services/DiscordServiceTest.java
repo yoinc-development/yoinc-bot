@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -49,6 +50,31 @@ public class DiscordServiceTest {
         discordService.cleanMessage(event4);
         verify(event4.getMessage()).delete();
         verify(event4.getMessage()).reply("https://www.xcancel.com/post");
+    }
+
+    @Test
+    public void testCleanMessageIsCaseInsensitive() {
+        MessageReceivedEvent event = createMockEvent("HTTPS://X.COM/Test and Https://Www.Twitter.com/Foo", false, ChannelType.TEXT);
+        discordService.cleanMessage(event);
+        verify(event.getMessage()).delete();
+        verify(event.getMessage()).reply("https://www.xcancel.com/Test and https://www.xcancel.com/Foo");
+    }
+
+    @Test
+    public void testCleanMessageIgnoresLookalikeHosts() {
+        for (String content : List.of("https://x.company/page", "https://twitter.com.evil.net/x", "https://x.com-fake.io")) {
+            MessageReceivedEvent event = createMockEvent(content, false, ChannelType.TEXT);
+            discordService.cleanMessage(event);
+            verify(event.getMessage(), never()).delete();
+            verify(event.getMessage(), never()).reply(anyString());
+        }
+    }
+
+    @Test
+    public void testCleanMessageLinkEndingSentence() {
+        MessageReceivedEvent event = createMockEvent("look at https://x.com.", false, ChannelType.TEXT);
+        discordService.cleanMessage(event);
+        verify(event.getMessage()).reply("look at https://www.xcancel.com.");
     }
 
     @Test
@@ -247,7 +273,14 @@ public class DiscordServiceTest {
 
         // Setup message operations (delete and reply return mocked RestActions)
         when(message.delete()).thenReturn(mock(AuditableRestAction.class));
-        when(message.reply(anyString())).thenReturn(mock(MessageCreateAction.class));
+        MessageCreateAction replyAction = mock(MessageCreateAction.class);
+        // run the success callback right away, like Discord would after the reply was sent
+        doAnswer(invocation -> {
+            Consumer<Message> success = invocation.getArgument(0);
+            success.accept(mock(Message.class));
+            return null;
+        }).when(replyAction).queue(any());
+        when(message.reply(anyString())).thenReturn(replyAction);
 
         return event;
     }
